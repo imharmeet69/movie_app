@@ -7,7 +7,7 @@ function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
 
   // Put your real OMDb API key here
-  const OMDB_API_KEY = '4a13e0ff';
+  const OMDB_API_KEY = import.meta.env.VITE_OMDB_API_KEY;
 
   const handleSearch = async (e) => {
     e.preventDefault(); // Prevents the page from refreshing on submit
