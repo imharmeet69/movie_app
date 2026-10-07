@@ -1,0 +1,5 @@
+{
+  "name": "Movie Streaming App",
+  "description": "Search movies and TV series via OMDb and stream them using VidSrc.",
+  "requestFramePermissions": []
+}
