@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan to eliminate click hijacking, intrusive redirects, and popup ads across all embedded video streaming servers using strict iframe sandboxing, permission policy controls, and navigation guards without introducing unnecessary UI clutter.",
+  "updatedAt": "2026-10-20T10:00:22.398723609Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

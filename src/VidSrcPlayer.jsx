@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function VidSrcPlayer({
   movie,
@@ -17,6 +17,22 @@ function VidSrcPlayer({
   const [episode, setEpisode] = useState(initialEpisode || 1);
   const [selectedServer, setSelectedServer] = useState('vidsrcme');
   const [justCompletedToast, setJustCompletedToast] = useState(false);
+
+  // Prevent any parent tab hijacking or unwanted unloads triggered by embed ad scripts
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Prevents background malicious redirects while keeping the streaming session active
+      if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        e.preventDefault();
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const handleSeasonSelect = (s) => {
     const newSeason = Math.max(1, parseInt(s, 10) || 1);
@@ -55,7 +71,7 @@ function VidSrcPlayer({
     }
   };
 
-  // Build clean stream embed URL without timestamp parameter
+  // Build clean stream embed URL across all supported mirror servers
   const streamUrl = (() => {
     if (selectedServer === 'vidsrc.to') {
       return isTv
@@ -67,6 +83,17 @@ function VidSrcPlayer({
         ? `https://vidsrc.cc/v2/embed/tv/${movie.imdbID}/${season}/${episode}`
         : `https://vidsrc.cc/v2/embed/movie/${movie.imdbID}`;
     }
+    if (selectedServer === 'autoembed') {
+      return isTv
+        ? `https://player.autoembed.cc/embed/tv/${movie.imdbID}/${season}/${episode}`
+        : `https://player.autoembed.cc/embed/movie/${movie.imdbID}`;
+    }
+    if (selectedServer === 'embedsu') {
+      return isTv
+        ? `https://embed.su/embed/tv/${movie.imdbID}/${season}/${episode}`
+        : `https://embed.su/embed/movie/${movie.imdbID}`;
+    }
+    // Default: vidsrcme.ru
     return isTv
       ? `https://vidsrcme.ru/embed/tv/${movie.imdbID}/${season}/${episode}`
       : `https://vidsrcme.ru/embed/movie/${movie.imdbID}`;
@@ -125,6 +152,8 @@ function VidSrcPlayer({
               <option value="vidsrcme">VidSrc (Primary)</option>
               <option value="vidsrc.to">VidSrc.to (Mirror 1)</option>
               <option value="vidsrc.cc">VidSrc.cc (Mirror 2)</option>
+              <option value="autoembed">AutoEmbed (Clean)</option>
+              <option value="embedsu">Embed.su (Fast)</option>
             </select>
           </label>
 
@@ -332,7 +361,7 @@ function VidSrcPlayer({
         </div>
       )}
 
-      {/* Video Stream Iframe */}
+      {/* Video Stream Iframe with Strict Anti-Click-Hijacking Sandbox */}
       <div
         style={{
           position: 'relative',
@@ -348,13 +377,31 @@ function VidSrcPlayer({
           key={`${movie.imdbID}-s${season}-e${episode}-${selectedServer}`}
           src={streamUrl}
           style={{ width: '100%', height: '100%', border: 'none' }}
+          /*
+           * Anti-Click-Hijacking & Anti-Ad Sandbox Policy:
+           * - allow-scripts: Enables video player JavaScript and streaming engines (HLS).
+           * - allow-same-origin: Allows video player to fetch video segments and assets.
+           * - allow-forms: Allows captcha or internal player form queries if needed.
+           * - EXCLUDED: allow-popups (Blocks all window.open, popup ads, and new tabs on click).
+           * - EXCLUDED: allow-popups-to-escape-sandbox (Prevents popup escaping).
+           * - EXCLUDED: allow-top-navigation (Blocks ad scripts from hijacking or redirecting the parent tab).
+           * - EXCLUDED: allow-top-navigation-by-user-activation (Blocks user clicks from redirecting top window).
+           */
+          sandbox="allow-scripts allow-same-origin allow-forms"
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+          referrerPolicy="origin"
           allowFullScreen
           title={`VidSrc Player - ${movie.Title}`}
         />
       </div>
 
-      <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text)' }}>
-        Your current episode (Season {season}, Episode {episode}) is saved. When you return to the home screen and click "Resume", it will open this episode.
+      <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+        <span>
+          Your current episode (Season {season}, Episode {episode}) is saved. When you return to the home screen and click "Resume", it will open this episode.
+        </span>
+        <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 500 }}>
+          🛡️ Click-hijacking & popup blocker active on all servers
+        </span>
       </div>
     </div>
   );
