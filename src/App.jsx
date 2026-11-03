@@ -10,6 +10,13 @@ function getCurrentTimestamp() {
 // Popular starter titles for instant streaming and testing
 const POPULAR_TITLES = [
   {
+    imdbID: 'tt0388629',
+    Title: 'One Piece',
+    Year: '1999–',
+    Type: 'series',
+    Poster: 'https://m.media-amazon.com/images/M/MV5BMTNjNGU4NTUtYmVjMy00YjRiLTkxMWUtNzZkMDNiYjZhNmViXkEyXkFqcGc@._V1_SX300.jpg',
+  },
+  {
     imdbID: 'tt1375666',
     Title: 'Inception',
     Year: '2010',
