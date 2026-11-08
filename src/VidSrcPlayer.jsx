@@ -29,8 +29,15 @@ function VidSrcPlayer({
   const [findNumberQuery, setFindNumberQuery] = useState('');
   const [isSynopsisExpanded, setIsSynopsisExpanded] = useState(false);
 
-  // Prevent parent tab hijacking or unwanted redirects from iframe ads
+  // Prevent parent tab hijacking, popups, or unwanted redirects from video ads
   useEffect(() => {
+    // Intercept window.open popup attempts triggered from ad scripts
+    const originalOpen = window.open;
+    window.open = function () {
+      console.warn('Popup attempt intercepted and blocked');
+      return null;
+    };
+
     const handleBeforeUnload = (e) => {
       if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
         e.preventDefault();
@@ -38,9 +45,21 @@ function VidSrcPlayer({
       }
     };
 
+    const handleBlur = () => {
+      if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        setTimeout(() => {
+          window.focus();
+        }, 100);
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('blur', handleBlur);
+
     return () => {
+      window.open = originalOpen;
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('blur', handleBlur);
     };
   }, []);
 
@@ -443,7 +462,6 @@ function VidSrcPlayer({
           key={`${movie.imdbID}-s${season}-e${episode}-${selectedServer}`}
           src={streamUrl}
           style={{ width: '100%', height: '100%', border: 'none' }}
-          sandbox="allow-scripts allow-same-origin allow-forms"
           allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
           referrerPolicy="origin"
           allowFullScreen
